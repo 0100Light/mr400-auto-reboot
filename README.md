@@ -13,8 +13,8 @@ Python ≥3.10. The setup script uses [`uv`](https://docs.astral.sh/uv/) to
 install a self-contained Python 3.11 without touching the system Python.
 
 ```bash
-git clone <this-repo-url> ~/archer-mr400-sms-forwarder
-cd ~/archer-mr400-sms-forwarder
+git clone <this-repo-url> ~/mr400-auto-reboot
+cd ~/mr400-auto-reboot
 
 # Router admin password (kept out of git via .gitignore)
 echo 'your_router_password' > password.txt
@@ -42,10 +42,10 @@ Add one of:
 
 ```cron
 # Daily at 04:00
-0 4 * * * /home/USER/archer-mr400-sms-forwarder/run-reboot.sh >> /home/USER/archer-mr400-sms-forwarder/reboot.log 2>&1
+0 4 * * * /home/USER/mr400-auto-reboot/run-reboot.sh >> /home/USER/mr400-auto-reboot/reboot.log 2>&1
 
 # Every 6 hours
-0 */6 * * * /home/USER/archer-mr400-sms-forwarder/run-reboot.sh >> /home/USER/archer-mr400-sms-forwarder/reboot.log 2>&1
+0 */6 * * * /home/USER/mr400-auto-reboot/run-reboot.sh >> /home/USER/mr400-auto-reboot/reboot.log 2>&1
 ```
 
 ## Configuration
