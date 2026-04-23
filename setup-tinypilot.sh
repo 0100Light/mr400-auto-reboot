@@ -1,25 +1,52 @@
 #!/usr/bin/env bash
 # Setup script for running the MR400 reboot job on a TinyPilot (or any
 # Debian/Ubuntu/Raspberry Pi OS host). Idempotent — safe to re-run.
+#
+# TinyPilot ships Debian Bullseye with Python 3.9, but `tplinkrouterc6u`
+# requires Python >= 3.10. We use `uv` to install a self-contained Python 3.11
+# without touching the system Python.
 set -euo pipefail
+
+if [ "$(id -u)" = "0" ]; then
+    echo "ERROR: do not run this script with sudo." >&2
+    echo "       uv installs to \$HOME/.local/bin — running as root puts it in /root." >&2
+    echo "       Just run: ./setup-tinypilot.sh" >&2
+    exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "== Installing python3-venv (requires sudo) =="
-if ! dpkg -s python3-venv >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y python3-venv
+PY_VERSION="3.11"
+
+echo "== Installing uv (if missing) =="
+if ! command -v uv >/dev/null 2>&1; then
+    # uv installs to $HOME/.local/bin; add that to PATH for this session.
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+# Ensure subsequent shells also see uv
+if ! grep -q '.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
 fi
 
-echo "== Creating virtualenv =="
+echo "== Installing Python $PY_VERSION via uv =="
+uv python install "$PY_VERSION"
+
+echo "== Creating virtualenv with Python $PY_VERSION =="
+if [ -d venv ]; then
+    # If venv exists but uses the wrong python, recreate.
+    if ! ./venv/bin/python -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>/dev/null; then
+        echo "Existing venv uses old Python — recreating"
+        rm -rf venv
+    fi
+fi
 if [ ! -d venv ]; then
-    python3 -m venv venv
+    uv venv --python "$PY_VERSION" venv
 fi
 
 echo "== Installing Python dependencies =="
-./venv/bin/pip install --upgrade pip
-./venv/bin/pip install -r requirements.txt
+uv pip install --python ./venv/bin/python -r requirements.txt
 
 echo "== Verifying import =="
 ./venv/bin/python -c "from tplinkrouterc6u import TplinkRouterProvider; print('Import OK')"

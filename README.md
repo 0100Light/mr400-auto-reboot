@@ -8,6 +8,10 @@ handles the GDPR-encrypted auth flow the newer MR400 firmware requires.
 
 ## Install on TinyPilot
 
+TinyPilot ships Debian Bullseye with Python 3.9, but `tplinkrouterc6u` requires
+Python ≥3.10. The setup script uses [`uv`](https://docs.astral.sh/uv/) to
+install a self-contained Python 3.11 without touching the system Python.
+
 ```bash
 git clone <this-repo-url> ~/archer-mr400-sms-forwarder
 cd ~/archer-mr400-sms-forwarder
@@ -16,6 +20,7 @@ cd ~/archer-mr400-sms-forwarder
 echo 'your_router_password' > password.txt
 chmod 600 password.txt
 
+# DO NOT use sudo — uv installs into $HOME/.local/bin
 ./setup-tinypilot.sh
 ```
 
