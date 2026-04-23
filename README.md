@@ -1,75 +1,56 @@
-# TP-Link Archer MR400 SMS Forwarder
+# TP-Link Archer MR400 Auto-Reboot
 
-This project allows you to forward incoming SMS messages from your TP-Link Archer MR400 LTE router to another phone number using the router's native SMS sending functionality.
+Scheduled reboot of a TP-Link Archer MR400 LTE router, designed to run from
+cron on a TinyPilot (or any Debian/Ubuntu/Raspberry Pi OS host).
 
-## Features
+Uses [`tplinkrouterc6u`](https://pypi.org/project/tplinkrouterc6u/), which
+handles the GDPR-encrypted auth flow the newer MR400 firmware requires.
 
-- Fetch incoming SMS messages from the TP-Link Archer MR400 router.
-- Forward the messages to a specified phone number via the router's SMS functionality.
-- Uses the router's API for both receiving and sending SMS without the need for third-party services.
-
-## Dependencies
-
-Install the required Python libraries:
+## Install on TinyPilot
 
 ```bash
-pip install rsa
-pip install requests
+git clone <this-repo-url> ~/archer-mr400-sms-forwarder
+cd ~/archer-mr400-sms-forwarder
+
+# Router admin password (kept out of git via .gitignore)
+echo 'your_router_password' > password.txt
+chmod 600 password.txt
+
+./setup-tinypilot.sh
 ```
 
-## Usage
+## Test once
 
-1. Clone this repository:
+Will actually reboot the router (~1–2 min downtime):
 
 ```bash
-git clone https://github.com/zackha/archer-mr400-sms-forwarder.git
+./run-reboot.sh
 ```
 
-2. Import the necessary library:
+## Schedule with cron
 
-```python
-from archer.mr400 import MR400Client
+```bash
+crontab -e
 ```
 
-3. Set up the router connection and forward incoming SMS messages to another phone number:
+Add one of:
 
-```python
-# Initialize the client with your router IP
-client = MR400Client("192.168.1.1")
+```cron
+# Daily at 04:00
+0 4 * * * /home/USER/archer-mr400-sms-forwarder/run-reboot.sh >> /home/USER/archer-mr400-sms-forwarder/reboot.log 2>&1
 
-# Log in using your router's credentials
-client.login("admin", "your_password")
-
-# Fetch and forward SMS
-forward_sms()
-
-# Log out from the router
-client.logout()
+# Every 6 hours
+0 */6 * * * /home/USER/archer-mr400-sms-forwarder/run-reboot.sh >> /home/USER/archer-mr400-sms-forwarder/reboot.log 2>&1
 ```
 
-4. Replace `"TARGET_PHONE_NUMBER"` with the phone number where you want to forward the SMS.
+## Configuration
 
-## Example
+`reboot.py` reads, in order of precedence:
 
-The following example demonstrates how to fetch incoming SMS messages and forward them:
-
-```python
-from archer.mr400 import MR400Client
-
-client = MR400Client("192.168.1.1")
-client.login("admin", "your_password")
-
-# Fetch SMS
-sms_list = client.get_sms()
-
-# Forward SMS
-for sms in sms_list:
-    message = f"Sender: {sms['from']}\nMessage: {sms['content']}\nDate: {sms['receivedTime']}"
-    client.send_sms("TARGET_PHONE_NUMBER", message)
-
-client.logout()
-```
+1. Environment variables: `ROUTER_IP`, `ROUTER_USERNAME`, `ROUTER_PASSWORD`
+2. `password.txt` next to the script (password only)
+3. Defaults: `ROUTER_IP=192.168.1.1`, `ROUTER_USERNAME=admin`
 
 ## License
 
-This project is licensed under the MIT License.
+MIT — see `LICENSE`.

@@ -1,2 +1,1 @@
-rsa
-requests
+tplinkrouterc6u

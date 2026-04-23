@@ -16,3 +16,11 @@ venv.bak/
 
 # macOS
 .DS_Store
+
+# Secrets / local config
+password.txt
+.env
+*.log
+
+# Runtime
+venv/
